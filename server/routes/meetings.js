@@ -2,9 +2,7 @@ const express = require("express");
 const meetingRouter = express.Router();
 const {
   getAllFromDatabase,
-  addToDatabase,
   createMeeting,
-  deleteFromDatabaseById,
   deleteAllFromDatabase
 } = require("../db");
 
