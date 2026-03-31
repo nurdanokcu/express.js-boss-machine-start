@@ -5,51 +5,60 @@ const {
   addToDatabase,
   getFromDatabaseById,
   updateInstanceInDatabase,
-  deleteFromDatabaseById
+  deleteFromDatabaseById,
 } = require("../db");
+
+// Validate :minionId once for all routes that use it
+minionRouter.param("minionId", (req, res, next, minionId) => {
+  if (isNaN(minionId)) {
+    return res.sendStatus(404);
+  }
+  req.minionId = minionId; // keep it as a string
+  next();
+});
 
 // GET / - Get all minions
 minionRouter.get("/", (req, res) => {
-  const allMinions = getAllFromDatabase("minions");
-  res.send(allMinions);
+  res.json(getAllFromDatabase("minions"));
 });
+
+// POST / - create minion
 minionRouter.post("/", (req, res) => {
-  const newMinion = req.body;
-  const addedMinion = addToDatabase("minions", newMinion);
-  if (addedMinion) {
-    res.status(201).send(addedMinion);
-  } else {
-    res.status(400).send();
+  const addedMinion = addToDatabase("minions", req.body);
+  if (!addedMinion) {
+    return res.sendStatus(400);
   }
+  res.status(201).json(addedMinion);
 });
+
+// GET /:minionId - one minion
 minionRouter.get("/:minionId", (req, res) => {
-  const minionId = req.params.minionId;
-  const minion = getFromDatabaseById("minions", minionId);
-  if (minion) {
-    res.status(200).send(minion);
-  } else {
-    res.status(404).send();
+  const minion = getFromDatabaseById("minions", req.minionId);
+  if (!minion) {
+    return res.sendStatus(404);
   }
+  res.json(minion);
 });
+
+
 minionRouter.put("/:minionId", (req, res) => {
-  const minionId = req.params.minionId;
-  const minionToUpdate = req.body;
-  minionToUpdate.id = minionId;
-  const updatedMinion = updateInstanceInDatabase("minions", minionToUpdate);
-  if (updatedMinion) {
-    res.status(200).send(updatedMinion);
-  } else {
-    res.status(400).send();
+  const updatedMinion = updateInstanceInDatabase("minions", {
+    ...req.body,
+    id: req.minionId,
+  });
+  if (!updatedMinion) {
+    return res.sendStatus(404);
   }
+  res.json(updatedMinion);
 });
+
+// DELETE /:minionId - delete minion
 minionRouter.delete("/:minionId", (req, res) => {
-  const minionId = req.params.minionId;
-  const deleted = deleteFromDatabaseById("minions", minionId);
-  if (deleted) {
-    res.status(200).send({ message: 'Minion deleted successfully' });
-  } else {
-    res.status(404).send();
+  const deleted = deleteFromDatabaseById("minions", req.minionId);
+  if (!deleted) {
+    return res.sendStatus(404);
   }
+  res.sendStatus(204);
 });
 
 module.exports = minionRouter;
